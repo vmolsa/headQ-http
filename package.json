@@ -1,0 +1,26 @@
+
+{
+  "name": "headq-http",
+  "version": "1.0.0",
+  "description": "$http service with headQ promises",
+  "homepage": "https://github.com/vmolsa/headQ-http",
+  "author": "https://github.com/vmolsa",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vmolsa/headQ-http.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vmolsa/headQ-http/issues"
+  },
+  "keywords": [
+	  "http",
+    "request",
+	  "service",
+	  "angular"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "headq": "^1.0.3"
+  }
+}

@@ -1,0 +1,20 @@
+<html>
+<head>
+	<script src="node_modules/headq/index.js"></script>
+	<script src="index.js"></script>
+</head>	
+	<script>
+		$http.get('http://google.com/').then(function(res) {
+			console.log(res);
+		}).catch(function(error) {
+			console.log(error);
+		});
+		
+		$http.get('http://google.com/', { responseType: 'arraybuffer' }).then(function(res) {
+			console.log(res);
+			console.log(res.data.byteLength);
+		}).catch(function(error) {
+			console.log(error);
+		});
+	</script>
+</html>
