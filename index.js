@@ -77,16 +77,18 @@
 
     return headers;
   }
-  
+
   function setHeaders(config) {
     if (!isObject(config.headers)) {
-      config.headers = {
-        'Accept': '*/*',
-      };
+      config.headers = {};
+    }
+    
+    if (!config.headers['Accept']) {
+      config.headers['Accept'] = '*/*';
     }
     
     if (isString(config.hostname)) {
-      if (config.port && (config.port !== 443 || config.port !== 80)) {
+      if (config.port && (config.port !== 443 && config.port !== 80)) {
         config.headers['Host'] = config.hostname + ':' + config.port;
       } else {
         config.headers['Host'] = config.hostname;
@@ -227,17 +229,18 @@
     
     config.method.toUpperCase();
     
+    var uri = url.parse(config.url);
     var timer = null;
     var socket = null;
     var req = $q.defer();
     
-    config.uri = url.parse(config.url);
-    config.ssl = (url.protocol == 'https') ? true : false;
-    config.port = config.port || config.uri.port || config.ssl ? 443 : 80;
-    config.hostname = config.uri.hostname || 'localhost';
-    config.local = (url.protocol == 'file');
-    config.path = url.pathname + url.search ? url.search : '';
-
+    config.ssl = (uri.protocol == 'https:') ? true : false;
+    config.port = config.port || uri.port || config.ssl ? 443 : 80;
+    config.hostname = uri.hostname || 'localhost';
+    config.local = (uri.protocol == 'file:');
+    config.path = uri.pathname;
+    config.path = uri.search ? config.path + uri.search : config.path;
+  
     function onAbort() {
       if (socket) {
         socket.abort();
@@ -301,13 +304,13 @@
       
       setHeaders(config);
       
-      if (config.data) {       
+      if (config.data) {
         if (!isString(config.data)) {
           try {
             config.data = JSON.stringify(config.data);
             
             if (!config.headers['Content-Type']) {
-              config.headers["Content-Type"] = 'application/json';
+              config.headers['Content-Type'] = 'application/json; charset=utf-8';
             }
           } catch(error) {
             req.reject(error);
@@ -323,6 +326,11 @@
       
       var xhr = config.ssl ? https.request : http.request;
       
+      if (config.username && config.password) {
+        config.auth = config.username + ':' + config.password;
+      }
+  
+      config.agent = false;
       socket = xhr(config, function(res) {
         var offset = 0;
         var length = parseInt(res.headers['content-length']);
@@ -333,7 +341,7 @@
         
         var buffer = new Buffer(length);
           
-        res.on('data', function(chunk) {
+        res.on('data', function(chunk) {        
           if (!length) {
             buffer = Buffer.concat([ buffer, chunk ]);
           } else {
@@ -356,19 +364,17 @@
               data = new Uint8Array(buffer).buffer;
               break;
             case 'json':
-              if (config.responseType === 'json') {
-                try {
-                  data = JSON.parse(buffer.toString('utf8'));
-                } catch (error) {
-                  req.reject(error);
-                }
+              try {
+                data = JSON.parse(buffer.toString('utf8'));
+              } catch (error) {
+                req.reject(error);
               }
               
               break;
             default:
               data = buffer.toString('utf8');
               break;
-          }          
+          }
           
           onRequest(res.statusCode, res.headers, data);
         });
@@ -377,7 +383,7 @@
       if (config.data) {
         socket.write(config.data);
       }
-      
+          
       socket.end();
     }
     
